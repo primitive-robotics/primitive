@@ -42,7 +42,7 @@ const Hero = () => (
     {/* Full Background Model */}
     <div className="absolute inset-0 z-0 opacity-80">
       <ModelViewer
-        url="https://raw.githubusercontent.com/primitive-robotics/primitive/main/robotic_arm.glb"
+        url="https://raw.githubusercontent.com/primitive-robotics/source/main/robotic_arm.glb"
         width="100%"
         height="100%"
         modelXOffset={0.8}
