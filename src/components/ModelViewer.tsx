@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from 'react';
+import React, { Suspense, useRef, useState, useEffect, Component } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, Stage, PresentationControls, OrbitControls, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -17,6 +17,11 @@ function Model({ url, modelXOffset = 0, modelYOffset = 0, autoRotate = false, au
   const gltf = useGLTF(url) as any;
   const ref = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('ModelViewer: gltf loaded for', url, { scene: gltf?.scene });
+  }, [gltf, url]);
 
   useFrame(() => {
     if (ref.current) {
@@ -56,6 +61,37 @@ type ModelViewerProps = {
   showScreenshotButton?: boolean;
 };
 
+class ErrorBoundary extends Component<{ children?: React.ReactNode }, { error: Error | null }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: any) {
+    // surface debugging info in the console
+    // eslint-disable-next-line no-console
+    console.error('ModelViewer Error:', error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex items-center justify-center w-full h-full text-white/80 p-4">
+          <div className="text-center">
+            <div className="font-bold mb-2">Failed to load 3D model</div>
+            <pre className="text-xs whitespace-pre-wrap">{this.state.error?.message}</pre>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children as any;
+  }
+}
+
 export default function ModelViewer({ 
   url, 
   width = '100%', 
@@ -79,49 +115,43 @@ export default function ModelViewer({
       className="model-viewer-container"
     >
       <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 4], fov: 45 }}>
-        <Suspense fallback={null}>
-          <Stage environment={environmentPreset} intensity={0.5} adjustCamera={true}>
-            <Model 
-              url={url} 
-              modelXOffset={modelXOffset} 
-              modelYOffset={modelYOffset}
-              autoRotate={autoRotate}
-              autoRotateSpeed={autoRotateSpeed}
-              enableHoverRotation={enableHoverRotation}
-            />
-          </Stage>
-          {enableMouseParallax ? (
-            <PresentationControls
-              global
-              rotation={[0, 0.3, 0]}
-              polar={[-Math.PI / 3, Math.PI / 3]}
-              azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
-            >
-              {/* Controls handled by PresentationControls */}
-            </PresentationControls>
-          ) : (
-            <OrbitControls enableZoom={false} />
-          )}
-          <Environment preset={environmentPreset} />
-          <ContactShadows position={[0, -1.5, 0]} opacity={0.4} scale={10} blur={2} far={4.5} />
-        </Suspense>
-      </Canvas>
-      {showScreenshotButton && (
-        <button 
-          className="absolute bottom-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-xs uppercase tracking-widest font-mono"
-          onClick={() => {
-            const canvas = document.querySelector('.model-viewer-container canvas');
-            if (canvas) {
-              const link = document.createElement('a');
-              link.download = 'robot-capture.png';
-              link.href = (canvas as HTMLCanvasElement).toDataURL();
-              link.click();
+        <ErrorBoundary>
+          <Suspense
+            fallback={
+              <group>
+                <mesh>
+                  {/* empty fallback - show a small overlay instead */}
+                </mesh>
+              </group>
             }
-          }}
-        >
-          Capture
-        </button>
-      )}
+          >
+            <Stage environment={environmentPreset} intensity={0.5} adjustCamera={true}>
+              <Model 
+                url={url} 
+                modelXOffset={modelXOffset} 
+                modelYOffset={modelYOffset}
+                autoRotate={autoRotate}
+                autoRotateSpeed={autoRotateSpeed}
+                enableHoverRotation={enableHoverRotation}
+              />
+            </Stage>
+            {enableMouseParallax ? (
+              <PresentationControls
+                global
+                rotation={[0, 0.3, 0]}
+                polar={[-Math.PI / 3, Math.PI / 3]}
+                azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
+              >
+                {/* Controls handled by PresentationControls */}
+              </PresentationControls>
+            ) : (
+              <OrbitControls enableZoom={false} />
+            )}
+            <Environment preset={environmentPreset} />
+            <ContactShadows position={[0, -1.5, 0]} opacity={0.4} scale={10} blur={2} far={4.5} />
+          </Suspense>
+        </ErrorBoundary>
+      </Canvas>
     </motion.div>
   );
 }

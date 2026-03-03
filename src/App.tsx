@@ -80,24 +80,6 @@ const Hero = () => (
       </motion.div>
     </div>
 
-    {/* Minimalist Screenshot Button (Top Right) */}
-    <div className="absolute top-8 right-8 z-20">
-      <button 
-        onClick={() => {
-          const canvas = document.querySelector('.model-viewer-container canvas');
-          if (canvas) {
-            const link = document.createElement('a');
-            link.download = 'primitive-robot.png';
-            link.href = (canvas as HTMLCanvasElement).toDataURL();
-            link.click();
-          }
-        }}
-        className="px-6 py-2 border border-white/20 rounded-full text-xs font-mono uppercase tracking-widest hover:bg-white hover:text-black transition-all pointer-events-auto"
-      >
-        Take Screenshot
-      </button>
-    </div>
-
     <motion.div 
       animate={{ y: [0, 10, 0] }}
       transition={{ duration: 2, repeat: Infinity }}
